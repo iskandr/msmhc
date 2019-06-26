@@ -12,7 +12,7 @@
 
 from .sequence import Sequence
 
-class SequenceFromReferenceTranscript(Sequence):
+class ReferenceSequence(Sequence):
     """
     Representation of protein sequences from reference transcripts
     """

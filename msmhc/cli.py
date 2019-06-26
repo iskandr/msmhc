@@ -16,11 +16,13 @@ from . import __version__
 from argparse import ArgumentParser
 from sys import argv
 
-from .fasta import write_fasta
-from collections import OrderedDict
+from .main import generate_sequences
 
 from varcode.reference import genome_for_reference_name
-parser = ArgumentParser("MS-MHC")
+
+from varcode.cli import variant_collection_from_args, add_variant_args
+
+parser = ArgumentParser(name="MS-MHC")
 
 parser.add_argument("--output", required=True, help="Name of output FASTA file")
 parser.add_argument("--reference", default="grch37", help="Name of reference genome (e.g. 'grch37')")
@@ -43,6 +45,7 @@ parser.add_argument(
     action="store_true",
     help="Include sequences by skipping exons in a coding sequence")
 
+add_variant_args(parser)
 
 def run(args_list=None):
     if args_list is None:
@@ -50,16 +53,15 @@ def run(args_list=None):
     args = parser.parse_args(args_list)
     print("MS-MHC version %s" % __version__)
     reference_genome = genome_for_reference_name(args.reference)
+    variants = variant_collection_from_args(args)
     sequences = generate_sequences(
         reference_genome=reference_genome,
         upstream_reading_frames=args.upstream_reading_frames,
         downstream_reading_frames=args.downstream_reading_frames,
-        skip_exons=skip_exons)
+        skip_exons=args.skip_exons)
     print("Writing %d records" % len(sequences))
     with open(args.outputs, "w") as f:
         for seq in sequences:
             seq.write_to_fasta_file(f)
-
-    write_fasta(name_to_seq_dict)
     print("Done.")
 

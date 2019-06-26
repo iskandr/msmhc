@@ -10,24 +10,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from collections import OrderedDict
-from .sequence_from_reference_transcript import SequenceFromReferenceTranscript
+from .reference_sequence import ReferenceSequence, MutantSequence
 
-def generate_redundant_reference_sequences(genome):
+def generate_reference_sequences(genome):
     """
-    Generate list of SequenceFromReferenceTranscript objects which may
+    Generate list of ReferenceSequence objects which may
     repeat the same protein sequence.
     """
     sequences = []
     for t in genome.transcripts():
         if t.is_protein_coding and t.complete and t.protein_sequence is not None:
-            sequences(SequenceFromReferenceTranscript(t))
+            sequences(ReferenceSequence(t))
     return sequences
 
-def collpase_redundant_sequences(sequences):
-    str_to_objects = OrderedDict()
-    for obj in sequences:
-        if obj in str_to_objects
+def generate_mutant_sequences(variants):
+    sequences = []
+    effects = variants.effects()
+    for effect in effects.top_priority_effect_per_variant().values():
+        if effect.modifies_protein_sequence:
+            if effect.mutant_protein_sequence is not None:
+                sequences.append(MutantSequence(effect))
+    return sequences
 
 def generate_sequences(
         genome,
@@ -35,9 +38,25 @@ def generate_sequences(
         upstream_reading_frames=False,
         downstream_reading_frames=False,
         skip_exons=False):
-    sequences = generate_redundant_reference_sequences(genome)
+    """
+
+    Parameters
+    ----------
+    genome : pyensembl.Genome
+
+    variants : varcode.VariantCollection
+
+    upstream_reading_frames : bool
+
+    downstream_reading_frames : bool
+
+    skip_exons : bool
+
+    Returns list of msmhc.Sequence
+    """
+    sequences = generate_reference_sequences(genome)
     if variants:
-        pass
+        sequences.extend(generate_mutant_sequences(variants))
     if upstream_reading_frames:
         pass
     if downstream_reading_frames:
