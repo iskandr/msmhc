@@ -59,6 +59,7 @@ if __name__ == '__main__':
         install_requires=[
             'pyensembl>=1.5.0',
             'varcode',
+            'progressbar2',
         ],
         long_description=readme_markdown,
         long_description_content_type='text/markdown',

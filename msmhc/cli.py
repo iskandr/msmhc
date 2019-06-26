@@ -22,10 +22,9 @@ from varcode.reference import genome_for_reference_name
 
 from varcode.cli import variant_collection_from_args, add_variant_args
 
-parser = ArgumentParser(name="MS-MHC")
+parser = ArgumentParser("MS-MHC")
 
 parser.add_argument("--output", required=True, help="Name of output FASTA file")
-parser.add_argument("--reference", default="grch37", help="Name of reference genome (e.g. 'grch37')")
 
 parser.add_argument(
     "--upstream-reading-frames",
@@ -52,10 +51,14 @@ def run(args_list=None):
         args_list = argv[1:]
     args = parser.parse_args(args_list)
     print("MS-MHC version %s" % __version__)
-    reference_genome = genome_for_reference_name(args.reference)
-    variants = variant_collection_from_args(args)
+    reference_genome = genome_for_reference_name(args.genome)
+    if args.vcf or args.maf or args.variant or args.json_variants:
+        variants = variant_collection_from_args(args)
+    else:
+        variants = []
     sequences = generate_sequences(
-        reference_genome=reference_genome,
+        genome=reference_genome,
+        variants=variants,
         upstream_reading_frames=args.upstream_reading_frames,
         downstream_reading_frames=args.downstream_reading_frames,
         skip_exons=args.skip_exons)

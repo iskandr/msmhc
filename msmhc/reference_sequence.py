@@ -19,6 +19,7 @@ class ReferenceSequence(Sequence):
     def __init__(self, transcript):
         self.transcript = transcript
         Sequence.__init__(
+            self,
             name="ref-%s" % transcript.transcript_id,
             sequence=transcript.protein_sequence,
             attributes={

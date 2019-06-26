@@ -10,7 +10,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .reference_sequence import ReferenceSequence, MutantSequence
+import progressbar
+
+from .reference_sequence import ReferenceSequence
+from .mutant_sequence import MutantSequence
 
 def generate_reference_sequences(genome):
     """
@@ -18,9 +21,9 @@ def generate_reference_sequences(genome):
     repeat the same protein sequence.
     """
     sequences = []
-    for t in genome.transcripts():
-        if t.is_protein_coding and t.complete and t.protein_sequence is not None:
-            sequences(ReferenceSequence(t))
+    for t in progressbar.progressbar(genome.transcripts()):
+        if t.biotype == "protein_coding" and t.complete and t.protein_sequence is not None:
+            sequences.append(ReferenceSequence(t))
     return sequences
 
 def generate_mutant_sequences(variants):

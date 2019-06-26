@@ -31,6 +31,7 @@ class Sequence(object):
         of the keys.
         """
         return sorted(self.attributes.items(), key=lambda x: x[0])
+
     def attribute_string(self):
         return " ".join([
             "%s=%s" % (k, v)

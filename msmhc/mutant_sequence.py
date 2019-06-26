@@ -19,6 +19,7 @@ class MutantSequence(Sequence):
     def __init__(self, effect):
         self.effect = effect
         Sequence.__init__(
+            self,
             name="mut-%s-%s" % (
                 effect.short_description.replace(" ", "-"),
                 effect.transcript.transcript_id),
