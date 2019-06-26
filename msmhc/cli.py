@@ -1,4 +1,17 @@
-from . import __version__ 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+from . import __version__
 
 from argparse import ArgumentParser
 from sys import argv
@@ -30,20 +43,6 @@ parser.add_argument(
     action="store_true",
     help="Include sequences by skipping exons in a coding sequence")
 
-def generate_sequences(genome):
-    sequence_to_names = OrderedDict()
-
-    for t in genome.transcripts():
-        if t.is_protein_coding and t.complete and t.protein_sequence is not None:
-            if t.protein_sequence in sequence_to_names:
-                sequence_to_names[t.protein_sequence].add(t.transcript_name)
-            else:
-                sequence_to_names[t.protein_sequence] = {t.transcript_name}
-    names_to_sequences = OrderedDict()
-    for sequence, transcript_names in sequence_to_names.items():
-        key = ";".join(transcript_names)
-        names_to_sequences[key] = sequence
-    return names_to_sequences
 
 def run(args_list=None):
     if args_list is None:
@@ -51,8 +50,16 @@ def run(args_list=None):
     args = parser.parse_args(args_list)
     print("MS-MHC version %s" % __version__)
     reference_genome = genome_for_reference_name(args.reference)
-    name_to_seq_dict = generate_sequences(reference_genome)
-    print("Writing %d records" % len(name_to_seq_dict))
+    sequences = generate_sequences(
+        reference_genome=reference_genome,
+        upstream_reading_frames=args.upstream_reading_frames,
+        downstream_reading_frames=args.downstream_reading_frames,
+        skip_exons=skip_exons)
+    print("Writing %d records" % len(sequences))
+    with open(args.outputs, "w") as f:
+        for seq in sequences:
+            seq.write_to_fasta_file(f)
+
     write_fasta(name_to_seq_dict)
     print("Done.")
 
