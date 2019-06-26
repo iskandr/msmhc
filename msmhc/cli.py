@@ -24,21 +24,24 @@ from varcode.cli import variant_collection_from_args, add_variant_args
 
 parser = ArgumentParser("MS-MHC")
 
+
 parser.add_argument("--output", required=True, help="Name of output FASTA file")
 
-parser.add_argument(
+sources_group = parser.add_argument_group("Protein sequence sources")
+
+sources_group.add_argument(
     "--upstream-reading-frames",
     default=False,
     action="store_true",
     help="Include upstream reading frames from 5' UTR start codons")
 
-parser.add_argument(
+sources_group.add_argument(
     "--downstream-reading-frames",
     default=False,
     action="store_true",
     help="Include downstream reading frames from use of alternative start codons")
 
-parser.add_argument(
+sources_group.add_argument(
     "--skip-exons",
     default=False,
     action="store_true",
@@ -63,7 +66,7 @@ def run(args_list=None):
         downstream_reading_frames=args.downstream_reading_frames,
         skip_exons=args.skip_exons)
     print("Writing %d records" % len(sequences))
-    with open(args.outputs, "w") as f:
+    with open(args.output, "w") as f:
         for seq in sequences:
             seq.write_to_fasta_file(f)
     print("Done.")
