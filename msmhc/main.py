@@ -57,13 +57,15 @@ def generate_sequences(
 
     Returns list of msmhc.Sequence
     """
+    print("Generating sequences from reference transcripts")
     sequences = generate_reference_sequences(genome)
     if variants:
+        print("Generating sequences from %d variants" % len(variants))
         sequences.extend(generate_mutant_sequences(variants))
     if upstream_reading_frames:
-        pass
+        print("Generating sequences from upstream reading frames")
     if downstream_reading_frames:
-        pass
+        print("Generating sequences from downstream reading frames")
     if skip_exons:
-        pass
+        print("Generating sequences from skipped exons")
     return sequences
