@@ -10,6 +10,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+class PeptideSource(object):
+    pass
 
-__version__ = "0.0.3"
+def collapse_peptide_sources(peptide_dict):
+    """
+    Given a dictionary from peptides to a list of source Sequence objects,
+    reduce each list to a single PeptideSource
 
+    Parameters
+    ----------
+    peptide_dict : dict from str to list
+
+    Returns
+    -------
+    dict from str to PeptideSource
+    """
+    pass

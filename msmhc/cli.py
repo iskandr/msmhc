@@ -16,38 +16,57 @@ from . import __version__
 from argparse import ArgumentParser
 from sys import argv
 
-from .main import generate_sequences
+from .main import generate_sequences, extract_peptides
 
 from varcode.reference import genome_for_reference_name
 
 from varcode.cli import variant_collection_from_args, add_variant_args
 
-parser = ArgumentParser("MS-MHC")
 
+def add_sources_to_argument_parser(parser):
+    sources_group = parser.add_argument_group("Protein sequence sources")
 
-parser.add_argument("--output", required=True, help="Name of output FASTA file")
+    sources_group.add_argument(
+        "--upstream-reading-frames",
+        default=False,
+        action="store_true",
+        help="Include upstream reading frames from 5' UTR start codons")
 
-sources_group = parser.add_argument_group("Protein sequence sources")
+    sources_group.add_argument(
+        "--downstream-reading-frames",
+        default=False,
+        action="store_true",
+        help="Include downstream reading frames from use of alternative start codons")
 
-sources_group.add_argument(
-    "--upstream-reading-frames",
-    default=False,
-    action="store_true",
-    help="Include upstream reading frames from 5' UTR start codons")
+    sources_group.add_argument(
+        "--skip-exons",
+        default=False,
+        action="store_true",
+        help="Include sequences by skipping exons in a coding sequence")
+    return parser
 
-sources_group.add_argument(
-    "--downstream-reading-frames",
-    default=False,
-    action="store_true",
-    help="Include downstream reading frames from use of alternative start codons")
+def add_peptide_params_to_argument_parser(parser):
+    peptide_group = parser.add_argument_group("Peptides")
+    peptide_group.add_argument(
+        "--min-peptide-length",
+        default=7,
+        help="Shortest peptide to include in output")
+    peptide_group.add_argument(
+        "--max-peptide-length",
+        default=20,
+        help="Longest peptide to include in output")
+    return parser
 
-sources_group.add_argument(
-    "--skip-exons",
-    default=False,
-    action="store_true",
-    help="Include sequences by skipping exons in a coding sequence")
+def create_argument_parser():
+    parser = ArgumentParser("MS-MHC")
+    parser.add_argument("--output", required=True, help="Name of output FASTA file")
+    add_sources_to_argument_parser(parser)
+    add_peptide_params_to_argument_parser(parser)
+    add_variant_args(parser)
+    return parser
 
-add_variant_args(parser)
+parser = create_argument_parser()
+
 
 def run(args_list=None):
     if args_list is None:
@@ -65,6 +84,12 @@ def run(args_list=None):
         upstream_reading_frames=args.upstream_reading_frames,
         downstream_reading_frames=args.downstream_reading_frames,
         skip_exons=args.skip_exons)
+    peptide_dict = extract_peptides(
+        sequences,
+        min_length=args.min_peptide_length,
+        max_length=args.max_peptide_length)
+
+
     print("Writing %d records" % len(sequences))
     with open(args.output, "w") as f:
         for seq in sequences:

@@ -21,7 +21,7 @@ class ReferenceSequence(Sequence):
         Sequence.__init__(
             self,
             name="ref-%s" % transcript.transcript_id,
-            sequence=transcript.protein_sequence,
+            amino_acids=transcript.protein_sequence,
             attributes={
                 "source": "reference-transcript",
                 "transcript_id": transcript.transcript_id,

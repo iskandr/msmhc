@@ -11,5 +11,12 @@
 # limitations under the License.
 
 
-__version__ = "0.0.3"
+from .mutant_sequence import MutantSequence
+from .reference_sequence import ReferenceSequence
+from .alt_orf import AltORF
 
+class_priority_list = [
+    ReferenceSequence,
+    MutantSequence,
+    AltORF,
+]

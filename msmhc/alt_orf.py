@@ -10,6 +10,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from .sequence import Sequence
 
-__version__ = "0.0.3"
-
+class AltORF(Sequence):
+    """
+    Representation of upstream and downstream reading frames relative
+    to annotated start codons
+    """
+    def __init__(self, transcript):
+        self.transcript = transcript
+        Sequence.__init__(
+            self,
+            name="alt-orf-?",
+            amino_acids="?",
+            attributes={})

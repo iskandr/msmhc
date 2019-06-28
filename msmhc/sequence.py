@@ -14,12 +14,12 @@ class Sequence(object):
     """
     Base class used for reference and modified protein sequences
     """
-    def __init__(self, name, sequence, attributes={}):
+    def __init__(self, name, amino_acids, attributes={}):
         self.name = name
-        self.sequence = sequence
+        self.amino_acids = amino_acids
 
         attributes = attributes.copy()
-        attributes["length"] = len(sequence)
+        attributes["length"] = len(amino_acids)
         self.attributes = attributes
 
     def fasta_key(self):
@@ -40,8 +40,8 @@ class Sequence(object):
 
     def sequence_split_into_lines(self, maxwidth=60):
         lines = []
-        for i in range(len(self.sequence) // maxwidth + 1):
-            subseq = self.sequence[i * maxwidth:(i + 1) * maxwidth]
+        for i in range(len(self.amino_acids) // maxwidth + 1):
+            subseq = self.amino_acids[i * maxwidth:(i + 1) * maxwidth]
             if len(subseq) > 0:
                 lines.append(subseq)
         return lines

@@ -23,7 +23,7 @@ class MutantSequence(Sequence):
             name="mut-%s-%s" % (
                 effect.short_description.replace(" ", "-"),
                 effect.transcript.transcript_id),
-            sequence=self.effect.mutant_protein_sequence,
+            amino_acids=self.effect.mutant_protein_sequence,
             attributes={
                 "source": "mutation",
                 "genomic_variant": effect.variant.short_description,
