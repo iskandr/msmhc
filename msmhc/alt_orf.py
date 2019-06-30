@@ -17,10 +17,32 @@ class AltORF(Sequence):
     Representation of upstream and downstream reading frames relative
     to annotated start codons
     """
-    def __init__(self, transcript):
+    def __init__(self, transcript, relative_start, amino_acids, coding_sequence):
         self.transcript = transcript
+        self.relative_start = relative_start
+        self.downstream = relative_start > 0
+        self.upstream = relative_start < 0
+        self.coding_sequence = coding_sequence
+        if self.upstream:
+            name = "Upstream-%dnt-%s" % (
+                -self.relative_start,
+                self.transcript.id,
+            )
+        else:
+            name = "Downstream-%dnt-%s" % (
+                self.relative_start,
+                self.transcript.id
+            )
         Sequence.__init__(
             self,
-            name="alt-orf-?",
-            amino_acids="?",
-            attributes={})
+            name=name,
+            amino_acids=amino_acids,
+            attributes={
+                "upstream-orf": "1" if self.upstream else "0",
+                "downstream-orf": "0" if self.upstream else "1",
+                "relative_start": str(self.relative_start),
+                "transcript_name": self.transcript.transcript_name,
+                "transcript_id": self.transcript.transcript_id,
+                "gene_name": self.transcript.gene_name,
+                "gene_id": self.transcript.gene_id,
+                "coding_sequence": self.coding_sequence})

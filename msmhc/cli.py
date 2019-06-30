@@ -17,6 +17,7 @@ from argparse import ArgumentParser
 from sys import argv
 
 from .main import generate_peptide_sequences
+from .decoys import generate_decoys
 
 from varcode.reference import genome_for_reference_name
 
@@ -61,11 +62,27 @@ def add_peptide_params_to_argument_parser(parser):
         help="Longest peptide to include in output")
     return parser
 
+
+def add_decoy_args(parser):
+    decoy_group = parser.add_argument_group("Decoys")
+    decoy_group.add_argument(
+        "--num-decoys-per-hit",
+        default=1,
+        type=int,
+        help="Number of decoys to generate per hit")
+    decoy_group.add_argument(
+        "--random-seed",
+        default=0,
+        type=int,
+        help="Random seed to make scrambling of sequences deterministic")
+    return parser
+
 def create_argument_parser():
     parser = ArgumentParser("MS-MHC")
     parser.add_argument("--output", required=True, help="Name of output FASTA file")
     add_sources_to_argument_parser(parser)
     add_peptide_params_to_argument_parser(parser)
+    add_decoy_args(parser)
     add_variant_args(parser)
     return parser
 
@@ -93,9 +110,19 @@ def run(args_list=None):
         max_peptide_length=args.max_peptide_length,
         restrict_sources_to_gene_name=args.gene_name)
 
-    print("Writing %d FASTA records" % len(peptide_sequences))
+    decoys = generate_decoys(
+        peptide_sequences,
+        n_decoys=len(peptide_sequences) * args.num_decoys_per_hit,
+        random_seed=args.random_seed)
+
+    combined_sequences = peptide_sequences + decoys
+    print("Writing %d FASTA records (%d hits, %d decoys)" % (
+        len(combined_sequences),
+        len(peptide_sequences),
+        len(decoys)))
+
     with open(args.output, "w") as f:
-        for seq in peptide_sequences:
+        for seq in combined_sequences:
             seq.write_to_fasta_file(f)
     print("Done.")
 

@@ -10,10 +10,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from collections import defaultdict
+from progressbar import progressbar
 
-import progressbar
+from varcode.effects.translate import translate
 
+from .alt_orf import AltORF
 from .reference_sequence import ReferenceSequence
 from .mutant_sequence import MutantSequence
 from .peptides import collapse_peptide_sources, extract_peptides
@@ -45,7 +46,7 @@ def generate_reference_sequences(
     else:
         transcripts = genome.transcripts()
 
-    for t in progressbar.progressbar(transcripts):
+    for t in progressbar(transcripts):
         if t.biotype == "protein_coding" and t.complete and t.protein_sequence is not None:
             sequences.append(ReferenceSequence(t))
     return sequences
@@ -68,31 +69,105 @@ def generate_mutant_sequences(variants):
                 sequences.append(MutantSequence(effect))
     return sequences
 
-def generate_upstream_reading_frames(sequences):
+# sequences often found before human start codons,
+# determined by looking at transcript sequences in GRCh37
+common_translation_initiation_signals = {
+    "GCC",
+    "ACC",
+    "AAG",
+    "AGG",
+    "AGC",
+    "AAA",
+    "AAC",
+    "ATC",
+    "GAG",
+    "GCG",
+    "GAC",
+}
+
+
+def generate_alt_reading_frames(transcript, upstream=False, min_peptide_length=7):
+    results = []
+    start_codon_offset = min(transcript.start_codon_spliced_offsets)
+    sequence = transcript.sequence
+    if upstream:
+        start = 3
+        end = start_codon_offset
+    else:
+        start = start_codon_offset + 3
+        end = len(sequence) - (min_peptide_length * 3)
+    for i in range(start, end):
+        first_codon = sequence[i:i + 3]
+        sequence_before_codon = sequence[i - 3:i]
+        if first_codon == "ATG":
+            print(sequence_before_codon, sequence_before_codon in common_translation_initiation_signals)
+            if sequence_before_codon in common_translation_initiation_signals:
+                cds = sequence[i:]
+                amino_acids = str(translate(
+                    nucleotide_sequence=cds,
+                    first_codon_is_start=True,
+                    to_stop=True,
+                    truncate=True))
+                n_aa = len(amino_acids)
+                if n_aa >= min_peptide_length:
+                    expected_cds_length = n_aa * 3
+                    cds = cds[:expected_cds_length]
+                    results.append(AltORF(
+                        transcript=transcript,
+                        relative_start=i - start_codon_offset,
+                        amino_acids=amino_acids,
+                        coding_sequence=cds))
+    return results
+
+def generate_upstream_reading_frames(
+        sequences,
+        min_peptide_length=7):
     """
 
     Parameters
     ----------
     sequences : list of ReferenceSequence
 
+    min_peptide_length : int
+
     Returns
     -------
     list of AltORF
     """
-    pass
+    results = []
+    for sequence in progressbar(sequences):
+        if sequence.__class__ is ReferenceSequence:
+            results.extend(
+                generate_alt_reading_frames(
+                    sequence.transcript,
+                    upstream=True,
+                    min_peptide_length=min_peptide_length))
+    print("Generated %d upstream reading frames" % len(results))
+    return results
 
 
-def generate_downstream_reading_frames(sequences):
+def generate_downstream_reading_frames(sequences, min_peptide_length=7):
     """
     Parameters
     ----------
     sequences : list of ReferenceSequence
 
+    min_peptide_length : int
+
     Returns
     -------
     list of AltORF
     """
-    pass
+    results = []
+    for sequence in progressbar(sequences):
+        if sequence.__class__ is ReferenceSequence:
+            results.extend(
+                generate_alt_reading_frames(
+                    sequence.transcript,
+                    upstream=False,
+                    min_peptide_length=min_peptide_length))
+    print("Generated %d downstream reading frames" % len(results))
+    return results
 
 def generate_skipped_exon_sequences(sequences):
     """
@@ -113,7 +188,8 @@ def generate_protein_sequences(
         upstream_reading_frames=False,
         downstream_reading_frames=False,
         skip_exons=False,
-        restrict_sources_to_gene_name=None):
+        restrict_sources_to_gene_name=None,
+        min_peptide_length=7):
     """
 
     Parameters
@@ -130,6 +206,8 @@ def generate_protein_sequences(
 
     restrict_sources_to_gene_name : str or None
 
+    min_peptide_length : int
+
     Returns list of msmhc.Sequence
     """
     print("Generating sequences from reference transcripts")
@@ -139,10 +217,16 @@ def generate_protein_sequences(
     sequences = reference_sequences.copy()
     if upstream_reading_frames:
         print("Generating sequences from upstream reading frames")
-        sequences.extend(generate_upstream_reading_frames(reference_sequences))
+        sequences.extend(
+            generate_upstream_reading_frames(
+                reference_sequences,
+                min_peptide_length=min_peptide_length))
     if downstream_reading_frames:
         print("Generating sequences from downstream reading frames")
-        sequences.extend(generate_downstream_reading_frames(reference_sequences))
+        sequences.extend(
+            generate_downstream_reading_frames(
+                reference_sequences,
+                min_peptide_length=min_peptide_length))
     if skip_exons:
         print("Generating sequences from skipped exons")
         sequences.extend(generate_skipped_exon_sequences(reference_sequences))
@@ -188,7 +272,8 @@ def generate_peptide_sequences(
         upstream_reading_frames=upstream_reading_frames,
         downstream_reading_frames=downstream_reading_frames,
         skip_exons=skip_exons,
-        restrict_sources_to_gene_name=restrict_sources_to_gene_name)
+        restrict_sources_to_gene_name=restrict_sources_to_gene_name,
+        min_peptide_length=min_peptide_length)
     peptide_sequence_dict = extract_peptides(
         protein_sequences,
         min_length=min_peptide_length,

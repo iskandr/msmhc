@@ -10,17 +10,48 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from .mass import mass_of_peptide
+
 class Sequence(object):
     """
     Base class used for reference and modified protein sequences
     """
-    def __init__(self, name, amino_acids, attributes={}):
+    def __init__(self, name, amino_acids, attributes={}, decoy=False):
         self.name = name
         self.amino_acids = amino_acids
+        self.decoy = decoy
 
         attributes = attributes.copy()
         attributes["length"] = len(amino_acids)
+        attributes["decoy"] = "1" if decoy else "0"
+        attributes["mass"] = mass_of_peptide(amino_acids)
         self.attributes = attributes
+
+    def __str__(self):
+        return "%s(name='%s', amino_acids='%s', decoy=%s, attributes=%s)" % (
+            self.__class__.__name__,
+            self.name,
+            self.amino_acids,
+            self.decoy,
+            self.attributes)
+
+    def __repr__(self):
+        return str(self)
+
+    def __eq__(self, other):
+        if self.__class__ is not other.__class__:
+            return False
+        if self.name != other.name:
+            return False
+        if self.amino_acids != other.amino_acids:
+            return False
+        for k, v in self.attributes.items():
+            if other.attributes.get(k) != v:
+                return False
+        return True
+
+    def __hash__(self):
+        return hash(self.name)
 
     def sorted_attribute_list(self):
         """
