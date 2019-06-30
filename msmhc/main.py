@@ -16,8 +16,11 @@ import progressbar
 
 from .reference_sequence import ReferenceSequence
 from .mutant_sequence import MutantSequence
+from .peptides import collapse_peptide_sources, extract_peptides
 
-def generate_reference_sequences(genome):
+def generate_reference_sequences(
+        genome,
+        restrict_sources_to_gene_name=None):
     """
     Generate list of ReferenceSequence objects which may
     repeat the same protein sequence.
@@ -26,13 +29,22 @@ def generate_reference_sequences(genome):
     ----------
     genome : pyensembl.Genome
 
+    restrict_sources_to_gene_name : str or None
+
     Returns
     -------
     list of ReferenceTranscript
     """
     sequences = []
     print("Gathering transcripts...")
-    transcripts = genome.transcripts()
+    if restrict_sources_to_gene_name:
+        genes = genome.genes_by_name(restrict_sources_to_gene_name)
+        transcripts = []
+        for g in genes:
+            transcripts.extend(g.transcripts)
+    else:
+        transcripts = genome.transcripts()
+
     for t in progressbar.progressbar(transcripts):
         if t.biotype == "protein_coding" and t.complete and t.protein_sequence is not None:
             sequences.append(ReferenceSequence(t))
@@ -94,41 +106,14 @@ def generate_skipped_exon_sequences(sequences):
     """
     pass
 
-def extract_peptides(sequences, min_length=7, max_length=20):
-    """
-    Parameters
-    ----------
-    sequences : list of Sequence
-        All generated protein sequences
 
-    min_length : int
-        Smallest peptide length to include
-
-    max_length : int
-        Largest peptide length to include
-
-    Returns
-    -------
-    Dictionary from str to list of Sequence objects which contained that peptide
-    """
-    peptide_dict = defaultdict(list)
-    for sequence_obj in sequences:
-        amino_acids = sequence_obj.sequence
-        n_aa = len(amino_acids)
-        for k in range(min_length, max_length + 1):
-            if n_aa >= k:
-                for i in range(n_aa - k + 1):
-                    peptide = amino_acids[i:i + k]
-                    peptide_dict[peptide].append(sequence_obj)
-    return peptide_dict
-
-
-def generate_sequences(
+def generate_protein_sequences(
         genome,
         variants=[],
         upstream_reading_frames=False,
         downstream_reading_frames=False,
-        skip_exons=False):
+        skip_exons=False,
+        restrict_sources_to_gene_name=None):
     """
 
     Parameters
@@ -143,10 +128,14 @@ def generate_sequences(
 
     skip_exons : bool
 
+    restrict_sources_to_gene_name : str or None
+
     Returns list of msmhc.Sequence
     """
     print("Generating sequences from reference transcripts")
-    reference_sequences = generate_reference_sequences(genome)
+    reference_sequences = generate_reference_sequences(
+        genome,
+        restrict_sources_to_gene_name=restrict_sources_to_gene_name)
     sequences = reference_sequences.copy()
     if upstream_reading_frames:
         print("Generating sequences from upstream reading frames")
@@ -156,8 +145,53 @@ def generate_sequences(
         sequences.extend(generate_downstream_reading_frames(reference_sequences))
     if skip_exons:
         print("Generating sequences from skipped exons")
-        sequences.extedn(generate_skipped_exon_sequences(reference_sequences))
+        sequences.extend(generate_skipped_exon_sequences(reference_sequences))
     if variants:
         print("Generating sequences from %d variants" % len(variants))
         sequences.extend(generate_mutant_sequences(variants))
     return sequences
+
+
+def generate_peptide_sequences(
+        genome,
+        variants=[],
+        upstream_reading_frames=False,
+        downstream_reading_frames=False,
+        skip_exons=False,
+        restrict_sources_to_gene_name=None,
+        min_peptide_length=7,
+        max_peptide_length=20):
+    """
+    Parameters
+    ----------
+    genome : pyensembl.Genome
+
+    variants : varcode.VariantCollection
+
+    upstream_reading_frames : bool
+
+    downstream_reading_frames : bool
+
+    skip_exons : bool
+
+    restrict_sources_to_gene_name : str or None
+
+    min_peptide_length : int
+
+    max_peptide_length : int
+
+    Returns list of msmhc.Sequence containing peptide sequences
+    """
+    protein_sequences = generate_protein_sequences(
+        genome=genome,
+        variants=variants,
+        upstream_reading_frames=upstream_reading_frames,
+        downstream_reading_frames=downstream_reading_frames,
+        skip_exons=skip_exons,
+        restrict_sources_to_gene_name=restrict_sources_to_gene_name)
+    peptide_sequence_dict = extract_peptides(
+        protein_sequences,
+        min_length=min_peptide_length,
+        max_length=max_peptide_length)
+    peptide_sequences = collapse_peptide_sources(peptide_sequence_dict)
+    return peptide_sequences

@@ -22,9 +22,6 @@ class Sequence(object):
         attributes["length"] = len(amino_acids)
         self.attributes = attributes
 
-    def fasta_key(self):
-        return self.name
-
     def sorted_attribute_list(self):
         """
         Returns list of attribute key/value pairs in alphabetical order
@@ -34,7 +31,10 @@ class Sequence(object):
 
     def attribute_string(self):
         return " ".join([
-            "%s=%s" % (k, v)
+            "%s=%s" % (
+                (k, ";".join(v))
+                if isinstance(v, (tuple, list, set))
+                else (k, v))
             for (k, v)
             in self.sorted_attribute_list()])
 
@@ -48,9 +48,9 @@ class Sequence(object):
 
     def fasta_string(self):
         return ">%s %s\n%s\n" % (
-            self.fasta_key(),
-            self.fasta_attribute_string(),
-            self.sequence_split_into_lines())
+            self.name,
+            self.attribute_string(),
+            "\n".join(self.sequence_split_into_lines()))
 
     def write_to_fasta_file(self, file_handle):
         file_handle.write(self.fasta_string())
