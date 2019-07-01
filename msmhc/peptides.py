@@ -149,6 +149,5 @@ def extract_peptides(sequences, min_length=7, max_length=20):
         for k in range(min_length, max_length + 1):
             if n_aa >= k:
                 for i in range(n_aa - k + 1):
-                    peptide = amino_acids[i:i + k]
-                    peptide_dict[peptide].append(sequence_obj)
+                    peptide_dict[amino_acids[i:i + k]].append(sequence_obj)
     return peptide_dict

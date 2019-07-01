@@ -35,18 +35,17 @@ def generate_reference_sequences(
     list of ReferenceTranscript
     """
     sequences = []
-    print("Gathering transcripts...")
+    print("Gathering reference genes...")
     if restrict_sources_to_gene_name:
         genes = genome.genes_by_name(restrict_sources_to_gene_name)
-        transcripts = []
-        for g in genes:
-            transcripts.extend(g.transcripts)
     else:
-        transcripts = genome.transcripts()
+        genes = genome.genes()
 
-    for t in progressbar(transcripts):
-        if t.biotype == "protein_coding" and t.complete and t.protein_sequence is not None:
-            sequences.append(ReferenceSequence(t))
+    for g in progressbar(genes):
+        if g.is_protein_coding:
+            for t in g.transcripts:
+                if t.is_protein_coding and t.complete and t.protein_sequence is not None:
+                    sequences.append(ReferenceSequence(t))
     return sequences
 
 def generate_mutant_sequences(variants):

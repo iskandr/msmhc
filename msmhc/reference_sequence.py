@@ -16,9 +16,13 @@ class ReferenceSequence(Sequence):
     """
     Representation of protein sequences from reference transcripts
     """
+
+    __slots__ = [
+        "transcript",
+    ]
+
     def __init__(self, transcript):
         self.transcript = transcript
-        self.cdna_sequence = transcript.sequence
         Sequence.__init__(
             self,
             name="ref-%s" % transcript.transcript_id,
@@ -27,6 +31,6 @@ class ReferenceSequence(Sequence):
                 "source": "reference-transcript",
                 "transcript_id": transcript.transcript_id,
                 "transcript_name": transcript.transcript_name,
-                "gene_id": transcript.gene.gene_id,
-                "gene_name": transcript.gene.gene_name,
+                "gene_id": transcript.gene_id,
+                "gene_name": transcript.gene_name,
             })

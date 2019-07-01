@@ -100,6 +100,7 @@ def run(args_list=None):
         variants = variant_collection_from_args(args)
     else:
         variants = []
+
     peptide_sequences = generate_peptide_sequences(
         genome=reference_genome,
         variants=variants,

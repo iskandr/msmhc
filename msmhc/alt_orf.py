@@ -21,6 +21,19 @@ class AltORF(Sequence):
     Representation of upstream and downstream reading frames relative
     to annotated start codons
     """
+    __slots__ = [
+        "original_sequence_name",
+        "transcript_id",
+        "transcript_name",
+        "gene_id",
+        "gene_name",
+        "relative_start",
+        "sequence_before_start",
+        "start_codon",
+        "sequence_after_start",
+        "ends_with_stop_codon",
+        "translation_initiation_score",
+    ]
     def __init__(
             self,
             original_sequence_name,
@@ -45,8 +58,8 @@ class AltORF(Sequence):
         self.gene_id = gene_id
         self.gene_name = gene_name
         self.relative_start = relative_start
-        self.is_downstream = relative_start > 0
-        self.is_upstream = relative_start < 0
+
+
         self.sequence_before_start = sequence_before_start
         self.start_codon = start_codon
         self.sequence_after_start = sequence_after_start
@@ -55,7 +68,9 @@ class AltORF(Sequence):
             self.sequence_before_start,
             self.start_codon,
             self.sequence_after_start)
-        if self.is_upstream:
+        is_upstream = relative_start < 0
+
+        if is_upstream:
             name = "Upstream-%s-%dnt" % (
                 self.original_sequence_name,
                 -self.relative_start,
@@ -70,7 +85,7 @@ class AltORF(Sequence):
             name=name,
             amino_acids=amino_acids,
             attributes={
-                "source": "upstream-orf" if self.is_upstream else "downstream-orf",
+                "source": "upstream-orf" if is_upstream else "downstream-orf",
                 "relative_start": str(self.relative_start),
                 "original_sequence_name": self.original_sequence_name,
                 "gene_name": self.gene_name,
@@ -160,10 +175,7 @@ def generate_alt_reading_frames(
         sequence_before_start_codon = cdna_sequence[
             max(0, i - kozak_length_before_start_codon):i]
         second_codon = cdna_sequence[i + 3:i + 3 + kozak_length_after_start_codon]
-        if first_codon == "ATG" or (
-                first_codon in ALT_START_CODONS and
-                len(sequence_before_start_codon) >= 3 and
-                sequence_before_start_codon[-3] in {"A", "G"}):
+        if first_codon == "ATG":
             cds = cdna_sequence[i:]
             amino_acids, ends_with_stop_codon = translate_cdna(
                 cdna_sequence=cds,

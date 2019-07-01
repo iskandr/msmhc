@@ -17,6 +17,13 @@ class Sequence(object):
     """
     Base class used for reference and modified protein sequences
     """
+    __slots__ = [
+        "name",
+        "amino_acids",
+        "attributes",
+        "decoy"
+    ]
+
     def __init__(self, name, amino_acids, attributes={}, decoy=False):
         self.name = name
         self.amino_acids = amino_acids
