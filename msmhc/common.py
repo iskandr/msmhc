@@ -10,6 +10,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+def convert_to_string(v):
+    t = type(v)
+    if t == bool:
+        return "1" if v else "0"
+    elif t in (tuple, list, set):
+        elt_strings = map(convert_to_string, v)
+        return ";".join(elt_strings)
+    elif t == float:
+        return "%0.4f" % v
+    else:
+        return str(v)
 
-__version__ = "0.0.5"
 

@@ -18,16 +18,18 @@ class MutantSequence(Sequence):
     """
     def __init__(self, effect):
         self.effect = effect
+        self.sanitized_effect_description = \
+            self.effect.short_description.replace(" ", "-")
         Sequence.__init__(
             self,
             name="mut-%s-%s" % (
-                effect.short_description.replace(" ", "-"),
+                self.sanitized_effect_description,
                 effect.transcript.transcript_id),
             amino_acids=self.effect.mutant_protein_sequence,
             attributes={
                 "source": "mutation",
                 "genomic_variant": effect.variant.short_description,
-                "protein_effect": effect.short_description,
+                "protein_effect": self.sanitized_effect_description,
                 "transcript_id": effect.transcript.transcript_id,
                 "transcript_name": effect.transcript.transcript_name,
                 "gene_id": effect.transcript.gene.gene_id,

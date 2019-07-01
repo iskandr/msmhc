@@ -12,9 +12,7 @@
 
 from progressbar import progressbar
 
-from varcode.effects.translate import translate
-
-from .alt_orf import AltORF
+from .alt_orf import generate_alt_reading_frames
 from .reference_sequence import ReferenceSequence
 from .mutant_sequence import MutantSequence
 from .peptides import collapse_peptide_sources, extract_peptides
@@ -69,55 +67,6 @@ def generate_mutant_sequences(variants):
                 sequences.append(MutantSequence(effect))
     return sequences
 
-# sequences often found before human start codons,
-# determined by looking at transcript sequences in GRCh37
-common_translation_initiation_signals = {
-    "GCC",
-    "ACC",
-    "AAG",
-    "AGG",
-    "AGC",
-    "AAA",
-    "AAC",
-    "ATC",
-    "GAG",
-    "GCG",
-    "GAC",
-}
-
-
-def generate_alt_reading_frames(transcript, upstream=False, min_peptide_length=7):
-    results = []
-    start_codon_offset = min(transcript.start_codon_spliced_offsets)
-    sequence = transcript.sequence
-    if upstream:
-        start = 3
-        end = start_codon_offset
-    else:
-        start = start_codon_offset + 3
-        end = len(sequence) - (min_peptide_length * 3)
-    for i in range(start, end):
-        first_codon = sequence[i:i + 3]
-        sequence_before_codon = sequence[i - 3:i]
-        if first_codon == "ATG":
-            print(sequence_before_codon, sequence_before_codon in common_translation_initiation_signals)
-            if sequence_before_codon in common_translation_initiation_signals:
-                cds = sequence[i:]
-                amino_acids = str(translate(
-                    nucleotide_sequence=cds,
-                    first_codon_is_start=True,
-                    to_stop=True,
-                    truncate=True))
-                n_aa = len(amino_acids)
-                if n_aa >= min_peptide_length:
-                    expected_cds_length = n_aa * 3
-                    cds = cds[:expected_cds_length]
-                    results.append(AltORF(
-                        transcript=transcript,
-                        relative_start=i - start_codon_offset,
-                        amino_acids=amino_acids,
-                        coding_sequence=cds))
-    return results
 
 def generate_upstream_reading_frames(
         sequences,
@@ -136,17 +85,20 @@ def generate_upstream_reading_frames(
     """
     results = []
     for sequence in progressbar(sequences):
-        if sequence.__class__ is ReferenceSequence:
-            results.extend(
-                generate_alt_reading_frames(
-                    sequence.transcript,
-                    upstream=True,
-                    min_peptide_length=min_peptide_length))
+        results.extend(
+            generate_alt_reading_frames(
+                sequence,
+                min_peptide_length=min_peptide_length,
+                search_start_offset=None,
+                search_end_offset=0))
     print("Generated %d upstream reading frames" % len(results))
     return results
 
 
-def generate_downstream_reading_frames(sequences, min_peptide_length=7):
+def generate_downstream_reading_frames(
+        sequences,
+        min_peptide_length=7,
+        search_end_offset=100):
     """
     Parameters
     ----------
@@ -154,18 +106,21 @@ def generate_downstream_reading_frames(sequences, min_peptide_length=7):
 
     min_peptide_length : int
 
+    search_end_offset : int
+        Maximum nucleotides past the original start codon to look for new ORFs
+
     Returns
     -------
-    list of AltORF
+    list of DownstreamORF
     """
     results = []
     for sequence in progressbar(sequences):
-        if sequence.__class__ is ReferenceSequence:
-            results.extend(
-                generate_alt_reading_frames(
-                    sequence.transcript,
-                    upstream=False,
-                    min_peptide_length=min_peptide_length))
+        results.extend(
+            generate_alt_reading_frames(
+                sequence,
+                min_peptide_length=min_peptide_length,
+                search_start_offset=3,
+                search_end_offset=search_end_offset))
     print("Generated %d downstream reading frames" % len(results))
     return results
 

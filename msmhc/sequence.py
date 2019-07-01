@@ -11,6 +11,7 @@
 # limitations under the License.
 
 from .mass import mass_of_peptide
+from .common import convert_to_string
 
 class Sequence(object):
     """
@@ -62,10 +63,7 @@ class Sequence(object):
 
     def attribute_string(self):
         return " ".join([
-            "%s=%s" % (
-                (k, ";".join(v))
-                if isinstance(v, (tuple, list, set))
-                else (k, v))
+            "%s=%s" % (k, convert_to_string(v))
             for (k, v)
             in self.sorted_attribute_list()])
 

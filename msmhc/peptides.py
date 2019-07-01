@@ -15,11 +15,13 @@ from collections import Counter, defaultdict
 from .sequence import Sequence
 from .mutant_sequence import MutantSequence
 from .reference_sequence import ReferenceSequence
-from .alt_orf import AltORF
+from .alt_orf import AltORF, UpstreamORF, DownstreamORF
 
 class_priority_list = [
     ReferenceSequence,
     MutantSequence,
+    UpstreamORF,
+    DownstreamORF,
     AltORF,
     Sequence,
 ]

@@ -18,6 +18,7 @@ class ReferenceSequence(Sequence):
     """
     def __init__(self, transcript):
         self.transcript = transcript
+        self.cdna_sequence = transcript.sequence
         Sequence.__init__(
             self,
             name="ref-%s" % transcript.transcript_id,
