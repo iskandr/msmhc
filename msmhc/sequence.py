@@ -21,26 +21,22 @@ class Sequence(object):
         "name",
         "amino_acids",
         "attributes",
-        "decoy"
     ]
 
-    def __init__(self, name, amino_acids, attributes={}, decoy=False):
+    def __init__(self, name, amino_acids, attributes={}):
         self.name = name
         self.amino_acids = amino_acids
-        self.decoy = decoy
 
         attributes = attributes.copy()
         attributes["length"] = len(amino_acids)
-        attributes["decoy"] = "1" if decoy else "0"
         attributes["mass"] = mass_of_peptide(amino_acids)
         self.attributes = attributes
 
     def __str__(self):
-        return "%s(name='%s', amino_acids='%s', decoy=%s, attributes=%s)" % (
+        return "%s(name='%s', amino_acids='%s', attributes=%s)" % (
             self.__class__.__name__,
             self.name,
             self.amino_acids,
-            self.decoy,
             self.attributes)
 
     def __repr__(self):
@@ -74,7 +70,7 @@ class Sequence(object):
             for (k, v)
             in self.sorted_attribute_list()])
 
-    def sequence_split_into_lines(self, maxwidth=60):
+    def sequence_split_into_lines(self, maxwidth=80):
         lines = []
         for i in range(len(self.amino_acids) // maxwidth + 1):
             subseq = self.amino_acids[i * maxwidth:(i + 1) * maxwidth]

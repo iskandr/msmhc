@@ -25,7 +25,7 @@ class Decoy(Sequence):
             self,
             name=name,
             amino_acids=amino_acids,
-            decoy=True)
+            attributes={"source": "decoy"})
 
 
 def generate_decoys(

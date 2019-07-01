@@ -27,7 +27,7 @@ class ReferenceSequence(Sequence):
             name="ref-%s" % transcript.transcript_id,
             amino_acids=transcript.protein_sequence,
             attributes={
-                "source": "reference-transcript",
+                "source": "reference",
                 "transcript_id": transcript.transcript_id,
                 "transcript_name": transcript.transcript_name,
                 "gene_id": transcript.gene_id,

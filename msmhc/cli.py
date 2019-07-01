@@ -17,6 +17,8 @@ from collections import defaultdict
 from argparse import ArgumentParser
 from sys import argv
 
+from progressbar import progressbar
+
 from .main import generate_protein_sequences
 from .peptides import extract_peptides, collapse_peptide_sources
 from .decoys import generate_decoys
@@ -141,7 +143,7 @@ def run(args_list=None):
         len(decoys)))
 
     with open(args.output, "w") as f:
-        for seq in combined_sequences:
+        for seq in progressbar(combined_sequences):
             seq.write_to_fasta_file(f)
     print("Done.")
 

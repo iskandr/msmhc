@@ -18,7 +18,7 @@ def convert_to_string(v):
         elt_strings = map(convert_to_string, v)
         return ";".join(elt_strings)
     elif t == float:
-        return "%0.4f" % v
+        return "%0.2f" % v
     else:
         return str(v)
 
