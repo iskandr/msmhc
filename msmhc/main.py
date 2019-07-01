@@ -98,7 +98,7 @@ def generate_upstream_reading_frames(
 def generate_downstream_reading_frames(
         sequences,
         min_peptide_length=7,
-        search_end_offset=100):
+        search_end_offset=500):
     """
     Parameters
     ----------
@@ -107,7 +107,10 @@ def generate_downstream_reading_frames(
     min_peptide_length : int
 
     search_end_offset : int
-        Maximum nucleotides past the original start codon to look for new ORFs
+        Maximum nucleotides past the original start codon to look for new ORFs.
+        Setting the default to 500bp since the paper
+        "miniMAVS, you complete me!" managed to find an alternative start
+        site 400bp downstream from the annotated start of MAVS.
 
     Returns
     -------
@@ -229,6 +232,9 @@ def generate_peptide_sequences(
         skip_exons=skip_exons,
         restrict_sources_to_gene_name=restrict_sources_to_gene_name,
         min_peptide_length=min_peptide_length)
+    print("Extracting %dmer-%dmer peptides from generated sequences" % (
+        min_peptide_length,
+        max_peptide_length))
     peptide_sequence_dict = extract_peptides(
         protein_sequences,
         min_length=min_peptide_length,

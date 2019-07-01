@@ -12,6 +12,8 @@
 
 from collections import Counter, defaultdict
 
+from progressbar import progressbar
+
 from .sequence import Sequence
 from .mutant_sequence import MutantSequence
 from .reference_sequence import ReferenceSequence
@@ -141,7 +143,7 @@ def extract_peptides(sequences, min_length=7, max_length=20):
     Dictionary from str to list of Sequence objects which contained that peptide
     """
     peptide_dict = defaultdict(list)
-    for sequence_obj in sequences:
+    for sequence_obj in progressbar(sequences):
         amino_acids = sequence_obj.amino_acids
         n_aa = len(amino_acids)
         for k in range(min_length, max_length + 1):
