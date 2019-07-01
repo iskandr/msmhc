@@ -126,7 +126,7 @@ def run(args_list=None):
         sequence_dict = defaultdict(list)
         for sequence_obj in hits:
             sequence_dict[sequence_obj.amino_acids].append(sequence_obj)
-            
+
     hits = collapse_peptide_sources(sequence_dict)
 
     decoys = generate_decoys(
