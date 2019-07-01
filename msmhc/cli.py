@@ -58,7 +58,7 @@ def add_peptide_params_to_argument_parser(parser):
         help="Shortest peptide to include in output")
     peptide_group.add_argument(
         "--max-peptide-length",
-        default=20,
+        default=15,
         help="Longest peptide to include in output")
     return parser
 

@@ -18,6 +18,7 @@ from .sequence import Sequence
 from .mutant_sequence import MutantSequence
 from .reference_sequence import ReferenceSequence
 from .alt_orf import AltORF, UpstreamORF, DownstreamORF
+from .numerical_peptide_representation import int_to_peptide, peptide_to_int, drop_last_letter
 
 class_priority_list = [
     ReferenceSequence,
@@ -125,7 +126,8 @@ def collapse_peptide_sources(peptide_dict):
 
 def extract_peptides(sequences, min_length=7, max_length=20):
     """
-    Extract subsequences from full protein sequences
+    Extract subsequences from full protein sequences, and return dictionary
+    mapping each kmer to its source sequences.
 
     Parameters
     ----------
@@ -142,12 +144,26 @@ def extract_peptides(sequences, min_length=7, max_length=20):
     -------
     Dictionary from str to list of Sequence objects which contained that peptide
     """
-    peptide_dict = defaultdict(list)
+    compact_peptide_dict = defaultdict(list)
     for sequence_obj in progressbar(sequences):
         amino_acids = sequence_obj.amino_acids
         n_aa = len(amino_acids)
-        for k in range(min_length, max_length + 1):
-            if n_aa >= k:
-                for i in range(n_aa - k + 1):
-                    peptide_dict[amino_acids[i:i + k]].append(sequence_obj)
+        already_seen = set()
+        for i in range(n_aa - min_length + 1):
+            longest_peptide = amino_acids[i:i + max_length]
+            longest_peptide_length = len(longest_peptide)
+            if longest_peptide_length >= min_length:
+                peptide_as_int = peptide_to_int(longest_peptide)
+                if peptide_as_int not in already_seen:
+                    already_seen.add(peptide_as_int)
+                    compact_peptide_dict[peptide_as_int].append(sequence_obj)
+                for _ in range(longest_peptide_length - 1, min_length - 1, -1):
+                    peptide_as_int = drop_last_letter(peptide_as_int)
+                    if peptide_as_int not in already_seen:
+                        already_seen.add(peptide_as_int)
+                        compact_peptide_dict[peptide_as_int].append(sequence_obj)
+    print("Materializing peptide strings from compact representation:")
+    peptide_dict = {}
+    for (numerical_representation, sequence_objs) in compact_peptide_dict.items():
+        peptide_dict[int_to_peptide(numerical_representation)] = sequence_objs
     return peptide_dict
