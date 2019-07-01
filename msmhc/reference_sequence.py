@@ -16,7 +16,6 @@ class ReferenceSequence(Sequence):
     """
     Representation of protein sequences from reference transcripts
     """
-
     __slots__ = [
         "transcript",
     ]

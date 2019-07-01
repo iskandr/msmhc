@@ -92,7 +92,8 @@ def collapse_peptide_sources(peptide_dict):
     """
     name_group_counts = Counter()
     peptide_sequences = []
-    for peptide, sources in peptide_dict.items():
+    for peptide in peptide_dict.keys():
+        sources = peptide_dict[peptide]
         assert len(sources) > 0
         filtered_sources = keep_max_priority_sequences(sources)
         assert len(filtered_sources) > 0
@@ -124,8 +125,11 @@ def collapse_peptide_sources(peptide_dict):
             attributes=combined_attributes))
     return peptide_sequences
 
-def extract_peptides(sequences, min_length=7, max_length=20):
+
+def _extract_peptides_with_numerical_encoding(sequences, min_length=7, max_length=20):
     """
+    Failed attempt to use numerical encodings to save on memory.
+
     Extract subsequences from full protein sequences, and return dictionary
     mapping each kmer to its source sequences.
 
@@ -164,6 +168,47 @@ def extract_peptides(sequences, min_length=7, max_length=20):
                         compact_peptide_dict[peptide_as_int].append(sequence_obj)
     print("Materializing peptide strings from compact representation:")
     peptide_dict = {}
-    for (numerical_representation, sequence_objs) in compact_peptide_dict.items():
+    for (numerical_representation, sequence_objs) in progressbar(compact_peptide_dict.items()):
         peptide_dict[int_to_peptide(numerical_representation)] = sequence_objs
+    return peptide_dict
+
+
+def extract_peptides(sequences, min_length=7, max_length=20):
+    """
+    Extract subsequences from full protein sequences, and return dictionary
+    mapping each kmer to its source sequences.
+
+    Parameters
+    ----------
+    sequences : list of Sequence
+        All generated protein sequences
+
+    min_length : int
+        Smallest peptide length to include
+
+    max_length : int
+        Largest peptide length to include
+
+    Returns
+    -------
+    Dictionary from str to list of Sequence objects which contained that peptide
+    """
+    from Bio.trie import trie
+    peptide_dict = trie()
+
+    for sequence_obj in progressbar(sequences):
+        amino_acids = sequence_obj.amino_acids
+        n_aa = len(amino_acids)
+        already_seen_for_protein = set()
+        for i in range(n_aa - min_length + 1):
+            longest_peptide = amino_acids[i:i + max_length]
+            longest_peptide_length = len(longest_peptide)
+            for k in range(min_length, longest_peptide_length):
+                kmer = longest_peptide[:k]
+                if kmer not in already_seen_for_protein:
+                    already_seen_for_protein.add(kmer)
+                    if kmer in peptide_dict:
+                        peptide_dict[kmer].append(sequence_obj)
+                    else:
+                        peptide_dict[kmer] = [sequence_obj]
     return peptide_dict

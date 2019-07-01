@@ -13,10 +13,12 @@
 
 from . import __version__
 
+from collections import defaultdict
 from argparse import ArgumentParser
 from sys import argv
 
-from .main import generate_peptide_sequences
+from .main import generate_protein_sequences
+from .peptides import extract_peptides, collapse_peptide_sources
 from .decoys import generate_decoys
 
 from varcode.reference import genome_for_reference_name
@@ -52,6 +54,7 @@ def add_sources_to_argument_parser(parser):
 
 def add_peptide_params_to_argument_parser(parser):
     peptide_group = parser.add_argument_group("Peptides")
+    peptide_group.add_argument("--extract-peptides", default=False, action="store_true")
     peptide_group.add_argument(
         "--min-peptide-length",
         default=7,
@@ -101,25 +104,40 @@ def run(args_list=None):
     else:
         variants = []
 
-    peptide_sequences = generate_peptide_sequences(
+    hits = generate_protein_sequences(
         genome=reference_genome,
         variants=variants,
         upstream_reading_frames=args.upstream_reading_frames,
         downstream_reading_frames=args.downstream_reading_frames,
         skip_exons=args.skip_exons,
         min_peptide_length=args.min_peptide_length,
-        max_peptide_length=args.max_peptide_length,
         restrict_sources_to_gene_name=args.gene_name)
 
+    if args.extract_peptides:
+        print("Extracting %dmer-%dmer peptides from generated sequences" % (
+            args.min_peptide_length,
+            args.max_peptide_length))
+        sequence_dict = extract_peptides(
+            hits,
+            min_length=args.min_peptide_length,
+            max_length=args.max_peptide_length)
+    else:
+        # make sure we don't have repeated protein sequences
+        sequence_dict = defaultdict(list)
+        for sequence_obj in hits:
+            sequence_dict[sequence_obj.amino_acids].append(sequence_obj)
+            
+    hits = collapse_peptide_sources(sequence_dict)
+
     decoys = generate_decoys(
-        peptide_sequences,
-        n_decoys=len(peptide_sequences) * args.num_decoys_per_hit,
+        hits,
+        n_decoys=len(hits) * args.num_decoys_per_hit,
         random_seed=args.random_seed)
 
-    combined_sequences = peptide_sequences + decoys
+    combined_sequences = hits + decoys
     print("Writing %d FASTA records (%d hits, %d decoys)" % (
         len(combined_sequences),
-        len(peptide_sequences),
+        len(hits),
         len(decoys)))
 
     with open(args.output, "w") as f:
