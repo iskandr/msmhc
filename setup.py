@@ -60,13 +60,15 @@ if __name__ == '__main__':
             'pyensembl>=1.5.0',
             'varcode',
             'progressbar2',
+            'pandas'
         ],
         long_description=readme_markdown,
         long_description_content_type='text/markdown',
         packages=find_packages(),
         entry_points={
             'console_scripts': [
-                'msmhc=msmhc.cli:run',
+                'msmhc-generate=msmhc.generate_cli:run',
+                'msmhc-fdr=msmhc.fdr_cli:run'
             ]
         }
     )
