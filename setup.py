@@ -60,7 +60,8 @@ if __name__ == '__main__':
             'pyensembl>=1.5.0',
             'varcode',
             'progressbar2',
-            'pandas'
+            'pandas',
+            'xlrd',
         ],
         long_description=readme_markdown,
         long_description_content_type='text/markdown',
