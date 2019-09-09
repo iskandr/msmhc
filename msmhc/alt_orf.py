@@ -10,8 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from isovar.genetic_code import translate_cdna
 
+from .genetic_code import translate_cdna
 from .sequence import Sequence
 from .reference_sequence import ReferenceSequence
 from .kozak import translation_initiation_score, ALT_START_CODONS
